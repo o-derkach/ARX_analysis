@@ -1,0 +1,6 @@
+cmake/**
+.cproject
+.project
+.settings/**
+file*
+Debug/**
