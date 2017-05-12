@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8)	 # Проверка версии CMake.
 
 project(ARX_analysis)			# Название проекта
 
-#aux_source_directory("Src/cipher"	SRC_DIRS)
-#aux_source_directory("Src/utils" 	SRC_DIRS)
+aux_source_directory("Src/ciphers"	SRC_DIRS)
+aux_source_directory("Src/analyzer" 	SRC_DIRS)
 aux_source_directory("Src" 		SRC_DIRS)
 
 set(HEADER_FILES "Inc")			# Тоже самое, но для библиотеки

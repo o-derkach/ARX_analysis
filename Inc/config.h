@@ -26,4 +26,8 @@
 
 #define BLOCK_ROT 1 //3
 
+static const char * file_path = "/media/sf_Alexander/ARX_new_results";
+
+#define FILE_PATH_LEN 35
+
 #endif /* CONFIG_H_ */

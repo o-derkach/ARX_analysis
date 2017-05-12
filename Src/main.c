@@ -1,30 +1,7 @@
 #include "utils.h"
 #include "config.h"
-//#include "distinguisher.h"
-
-#define ROT_HI(A, R) (((A << R) | (A >> (PART_BIT_LEN - R))) & PART_BIT_MASK)
-#define ROT_LO(A, R) (((A << (PART_BIT_LEN - R)) & PART_BIT_MASK) | (A >> R))
-
-#define ARX_GOST(X, K, R) ((X & PART_BIT_MASK) << PART_BIT_LEN) | ((X >> PART_BIT_LEN) ^ ROT_HI(((X + K) & PART_BIT_MASK), R))
-
-static const uint32_t byteWeight[256] = {
-	0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
-	4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
-};
+#include "ciphers.h"
+#include "lipmaa_moriai.h"
 
 static const uint32_t S_box[256] = {
 		0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -45,7 +22,7 @@ static const uint32_t S_box[256] = {
 		0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16,
 };
 
-static const uint64_t XDP_8[16][16] = {
+static const uint32_t XDP_8[16][16] = {
 	{256,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0,   0, },
 	{  0, 128,   0,  64,   0,   0,   0,  32,   0,   0,   0,   0,   0,   0,   0,  32, },
 	{  0,   0, 128,   0,   0,   0,  64,   0,   0,   0,   0,   0,   0,   0,  64,   0, },
@@ -63,25 +40,6 @@ static const uint64_t XDP_8[16][16] = {
 	{  0,   0,  64,   0,   0,   0,  64,   0,   0,   0,  64,   0,   0,   0,  64,   0, },
 	{  0,  32,   0,  32,   0,  32,   0,  32,   0,  32,   0,  32,   0,  32,   0,  32, },
 };
-
-//static const uint32_t XDP_4[16][16] = {
-//		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-//		{0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03},
-//		{0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00},
-//		{0x00, 0x02, 0x00, 0x02, 0x00, 0x03, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03},
-//		{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00},
-//		{0x00, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x03},
-//		{0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00},
-//		{0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03},
-//		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
-//		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x03},
-//		{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00},
-//		{0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x00, 0x03, 0x00, 0x02, 0x00, 0x02, 0x00, 0x03, 0x00, 0x03},
-//		{0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00},
-//		{0x00, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x03, 0x00, 0x00, 0x00, 0x03, 0x00, 0x02, 0x00, 0x03},
-//		{0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00},
-//		{0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03, 0x00, 0x03}
-//};
 
 static const uint32_t XDP_16[256][256] = {
 	{65536,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0,     0, },
@@ -341,75 +299,6 @@ static const uint32_t XDP_16[256][256] = {
 	{    0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0,     0,     0,  1024,     0, },
 	{    0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512,     0,   512, },
 };
-
-
-uint32_t arx_gost(uint32_t in, uint32_t k, uint32_t r) {
-	uint32_t x, y;
-	uint32_t out = 0;
-	x = in >> PART_BIT_LEN;
-	y = (in & PART_BIT_MASK);
-	out = y << PART_BIT_LEN;
-	y = ((y + k) & PART_BIT_MASK);
-	y = ROT_HI(y, r);
-	y ^= x;
-	out ^= y;
-	return out;
-}
-
-void lipmaa_moriai() {
-	uint32_t alpha, gamma;
-	uint32_t eq;
-
-	FILE *f = fopen("/media/sf_Alexander/xdp_4.txt", "w");
-
-	fprintf(f, "static const uint32_t XDP_8[256][256] = {\n");
-	for (alpha = 0; alpha < KEY_SPACE; ++alpha) {
-		fprintf(f, "\t{");
-		for (gamma = 0; gamma < KEY_SPACE; ++gamma) {
-			eq = (PART_BIT_MASK ^ (alpha << 1)) & (PART_BIT_MASK ^ (gamma << 1)) & PART_BIT_MASK;
-			if ((eq & (alpha ^ gamma ^ (gamma << 1)) & PART_BIT_MASK) == 0) {
-				fprintf(f, "%5d, ", 1 << (2 * KEY_BIT_LEN - byteWeight[(~eq) & PART_BIT_MASK]));
-			}
-			else {
-				fprintf(f, "    0, ");
-			}
-		}
-		fprintf(f, "},\n");
-	}
-	fprintf(f, "};\n");
-
-	fclose(f);
-}
-
-void lipmaa_moriai_check() {
-	uint32_t in, key, out, out_g;
-	uint32_t alpha, gamma;
-	uint32_t gamma_arr[KEY_SPACE];
-	uint32_t i;
-
-	for (alpha = 0; alpha < KEY_SPACE; ++alpha) {
-		for (i = 0; i < KEY_SPACE; ++i)
-			gamma_arr[i] = 0;
-
-		for (in = 0; in < KEY_SPACE; ++in) {
-			for (key = 0; key < KEY_SPACE; ++key) {
-				out = (in + key) & PART_BIT_MASK;
-				out_g = ((in ^ alpha) + key) & PART_BIT_MASK;
-				gamma = out ^ out_g;
-				gamma_arr[gamma]++;
-			}
-		}
-
-		for (i = 0; i < KEY_SPACE; ++i)
-			if (gamma_arr[i] != XDP_8[alpha][i]) {
-				ERROR("MISMATCH Lipmaa Moriai!!!\n");
-				printf("xdp = %d, gamma_arr = %d\n", XDP_8[alpha][i], gamma_arr[i]);
-				printf("alpha = %d, gamma = %d\n", alpha, i);
-				getchar();
-				getchar();
-			}
-	}
-}
 
 void arx_total_search_two() {
 	uint32_t block;
@@ -1406,60 +1295,6 @@ void arx_rotation_search_three() {
 	fclose(f);
 }
 
-void arx_gost_check() {
-	uint32_t block;
-	uint32_t key_1, key_2;
-	uint32_t arx_f, arx_m;
-	uint32_t in, k;
-
-	for (block = 0; block < BLOCK_SPACE; ++block) {
-		for (key_1 = 0; key_1 < KEY_SPACE; ++key_1) {
-			for (key_2 = 0; key_2 < KEY_SPACE; ++key_2) {
-				in = block;
-				k = key_1;
-
-				arx_f = arx_gost(block, key_1, BLOCK_ROT);
-				if (k != key_1) {
-					ERROR("key_1 mismatch\n");
-				}
-				if (in != block) {
-					ERROR("block mismatch\n");
-				}
-				k = key_2;
-				arx_f = arx_gost(arx_f, key_2, BLOCK_ROT);
-				if (k != key_2) {
-					ERROR("key_2 mismatch\n");
-				}
-				k = key_1;
-				block = in;
-				arx_m = ARX_GOST(block, key_1, BLOCK_ROT);
-				if (k != key_1) {
-					ERROR("key_1 mismatch\n");
-				}
-				if (in != block) {
-					ERROR("block mismatch\n");
-				}
-				k = key_2;
-				arx_m = ARX_GOST(arx_m, key_2, BLOCK_ROT);
-				if (k != key_2) {
-					ERROR("key_2 mismatch\n");
-				}
-				if (arx_m != arx_f) {
-					ERROR("ARS MISMATCH\n");
-					printf("in = 0x%08X\n", in);
-					printf("key_1 = 0x%08X\n", key_1);
-					printf("key_2 = 0x%08X\n", key_2);
-					printf("ARX_MACRO = 0x%08X\n", arx_m);
-					printf("ARX_FUNCK = 0x%08X\n", arx_f);
-					getchar();
-					getchar();
-
-				}
-			}
-		}
-	}
-}
-
 int main()
 {
 	srand(time(NULL));
@@ -1470,7 +1305,7 @@ int main()
 //	arx_best_rot_two();
 //	arx_best_rot_five();
 //	arx_best_rot_six();
-	arx_total_search_sbox_three();
+//	arx_total_search_sbox_three();
 //	arx_total_search_sbox();
 //	arx_total_search_four();
 //	arx_rotation_search_three();
@@ -1478,6 +1313,10 @@ int main()
 //	arx_rotation_search_three();
 //	arx_total_search_three();
 //	arx_total_search_four();
+//	lipmaa_moriai_check(XDP_8, 16);
+//	printf("xdp_8 pass\n");
+	lipmaa_moriai_check(XDP_16, 256);
+	printf("xdp_16 pass\n");
 	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
 	DEBUG("I am alive\n");
 	return 0;
