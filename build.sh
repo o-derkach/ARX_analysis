@@ -8,6 +8,7 @@ fi
 cd cmake
 if [[ $1 ]]; then 
 	if [[ $1 == "rebuild" ]]; then
+		echo -e "\e[1;34mClean\e[0m"
 		rm -rf *
 	fi
 fi
