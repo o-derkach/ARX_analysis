@@ -17,13 +17,21 @@ int main()
 //	arx_gost_check();
 
 	/* Diff analysis checks */
-	arx_diff_search_sbox_two();
-	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
-	arx_diff_search_sbox_three();
+//	arx_diff_search_sbox_two();
+//	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
+//	arx_diff_search_sbox_three();
 
 	/* Rot analysis checks */
 //	arx_rotation_search_two();
-//	arx_rotation_search_three();
+//	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
+	arx_rotation_search_three();
+	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
+//	arx_rotation_search_four();
+//	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
+//	arx_rotation_search_five();
+//	printf("Calculation done in %0.1f seconds...\n", (double)(clock() - c) / CLOCKS_PER_SEC);
+//	arx_rotation_search_six();
+	arx_rotation_search_three_recount();
 
 	/* Best rot search */
 //	arx_best_rot_two();

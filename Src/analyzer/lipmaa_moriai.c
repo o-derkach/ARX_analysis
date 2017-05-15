@@ -25,7 +25,7 @@ void lipmaa_moriai() {
 
 	char f_name[FILE_PATH_LEN + 15];
 
-	sprintf(f_name, "%s%s%02d%s", file_path, "xdp_", BLOCK_BIT_LEN, ".txt");
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp_", BLOCK_BIT_LEN, ".txt");
 
 	FILE *f = fopen(f_name, "w");
 

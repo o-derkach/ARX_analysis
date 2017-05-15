@@ -41,7 +41,7 @@ void arx_diff_search_sbox_two() {
 
 	char f_name[FILE_PATH_LEN + 20];
 
-	sprintf(f_name, "%s%s%02d%s", file_path, "sbox_2r_", SBLOCK_BIT_LEN, ".txt");
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "sbox_2r_", SBLOCK_BIT_LEN, ".txt");
 
 	for (alpha = 0; alpha < SBLOCK_SPACE; ++alpha) {
 		alpha_sum[alpha] = 0;
@@ -173,7 +173,7 @@ void arx_diff_search_sbox_three() {
 
 	char f_name[FILE_PATH_LEN + 20];
 
-	sprintf(f_name, "%s%s%02d%s", file_path, "sbox_3r_", SBLOCK_BIT_LEN, ".txt");
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "sbox_3r_", SBLOCK_BIT_LEN, ".txt");
 
 	for (alpha = 0; alpha < SBLOCK_SPACE; ++alpha) {
 		alpha_sum[alpha] = 0;

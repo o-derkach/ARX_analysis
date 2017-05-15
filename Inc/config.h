@@ -4,7 +4,7 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#define BLOCK_BIT_LEN 16
+#define BLOCK_BIT_LEN 8
 #define BLOCK_BYTE_LEN (BLOCK_BIT_LEN / 8)
 #define BLOCK_WORD_LEN (BLOCK_BIT_LEN / 32)
 #define BLOCK_SPACE (1 << BLOCK_BIT_LEN)
@@ -28,10 +28,10 @@
 
 #define MAX_TEXT_NUM 10000
 
-#define BLOCK_ROT 3 //3
+#define BLOCK_ROT 1 //3
 
-static const char * file_path = "/media/sf_Alexander/ARX_new_results";
+#define FILE_PATH "/media/sf_Alexander/ARX_new_results/"
 
-#define FILE_PATH_LEN 35
+#define FILE_PATH_LEN 36
 
 #endif /* CONFIG_H_ */
