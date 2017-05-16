@@ -307,7 +307,7 @@ void arx_best_rot_two() {
 				g1 = gamma >> PART_BIT_LEN;
 				g2 = gamma & PART_BIT_MASK;
 
-				xdp_total = XDP_8[a2][(ROT_LO((a1 ^ g1), block_rot))] * XDP_8[g1][(ROT_LO((a2 ^ g2), block_rot))];
+				xdp_total = XDP[a2][(ROT_LO((a1 ^ g1), block_rot))] * XDP[g1][(ROT_LO((a2 ^ g2), block_rot))];
 
 				if (xdp_total != 65536 && xdp_max[block_rot - 1] < xdp_total) {
 					xdp_max[block_rot - 1] = xdp_total;
@@ -362,9 +362,9 @@ void arx_best_rot_three() {
 
 				xdp_total = 0;
 				for (b2 = 0; b2 < KEY_SPACE; ++b2) {
-					xdp_total += (XDP_8[a2][(ROT_LO((a1 ^ b2), block_rot))]
-					            * XDP_8[b2][(ROT_LO((a2 ^ g1), block_rot))]
-					            * XDP_8[g1][(ROT_LO((b2 ^ g2), block_rot))]);
+					xdp_total += (XDP[a2][(ROT_LO((a1 ^ b2), block_rot))]
+					            * XDP[b2][(ROT_LO((a2 ^ g1), block_rot))]
+					            * XDP[g1][(ROT_LO((b2 ^ g2), block_rot))]);
 				}
 
 				if (xdp_total != 16777216 && xdp_max[block_rot - 1] < xdp_total) {
@@ -421,10 +421,10 @@ void arx_best_rot_four() {
 				xdp_total = 0;
 				for (b2 = 0; b2 < KEY_SPACE; ++b2) {
 					for (t2 = 0; t2 < KEY_SPACE; ++t2) {
-						xdp_total += (XDP_8[a2][(ROT_LO((a1 ^ b2), block_rot))]
-									* XDP_8[b2][(ROT_LO((a2 ^ t2), block_rot))]
-									* XDP_8[t2][(ROT_LO((b2 ^ g1), block_rot))]
-									* XDP_8[g1][(ROT_LO((t2 ^ g2), block_rot))]);
+						xdp_total += (XDP[a2][(ROT_LO((a1 ^ b2), block_rot))]
+									* XDP[b2][(ROT_LO((a2 ^ t2), block_rot))]
+									* XDP[t2][(ROT_LO((b2 ^ g1), block_rot))]
+									* XDP[g1][(ROT_LO((t2 ^ g2), block_rot))]);
 					}
 				}
 
@@ -483,11 +483,11 @@ void arx_best_rot_five() {
 				for (b2 = 0; b2 < KEY_SPACE; ++b2) {
 					for (t2 = 0; t2 < KEY_SPACE; ++t2) {
 						for (k2 = 0; k2 < KEY_SPACE; ++k2) {
-							xdp_total += (XDP_8[a2][(ROT_LO((a1 ^ b2), block_rot))]
-										* XDP_8[b2][(ROT_LO((a2 ^ k2), block_rot))]
-										* XDP_8[k2][(ROT_LO((b2 ^ t2), block_rot))]
-										* XDP_8[t2][(ROT_LO((k2 ^ g1), block_rot))]
-										* XDP_8[g1][(ROT_LO((t2 ^ g2), block_rot))]);
+							xdp_total += (XDP[a2][(ROT_LO((a1 ^ b2), block_rot))]
+										* XDP[b2][(ROT_LO((a2 ^ k2), block_rot))]
+										* XDP[k2][(ROT_LO((b2 ^ t2), block_rot))]
+										* XDP[t2][(ROT_LO((k2 ^ g1), block_rot))]
+										* XDP[g1][(ROT_LO((t2 ^ g2), block_rot))]);
 						}
 					}
 				}
@@ -548,12 +548,12 @@ void arx_best_rot_six() {
 					for (t2 = 0; t2 < KEY_SPACE; ++t2) {
 						for (k2 = 0; k2 < KEY_SPACE; ++k2) {
 							for (l2 = 0; l2 < KEY_SPACE; ++l2) {
-								xdp_total += (XDP_8[a2][(ROT_LO((a1 ^ b2), block_rot))]
-											* XDP_8[b2][(ROT_LO((a2 ^ l2), block_rot))]
-											* XDP_8[l2][(ROT_LO((b2 ^ k2), block_rot))]
-											* XDP_8[k2][(ROT_LO((l2 ^ t2), block_rot))]
-											* XDP_8[t2][(ROT_LO((k2 ^ g1), block_rot))]
-											* XDP_8[g1][(ROT_LO((t2 ^ g2), block_rot))]);
+								xdp_total += (XDP[a2][(ROT_LO((a1 ^ b2), block_rot))]
+											* XDP[b2][(ROT_LO((a2 ^ l2), block_rot))]
+											* XDP[l2][(ROT_LO((b2 ^ k2), block_rot))]
+											* XDP[k2][(ROT_LO((l2 ^ t2), block_rot))]
+											* XDP[t2][(ROT_LO((k2 ^ g1), block_rot))]
+											* XDP[g1][(ROT_LO((t2 ^ g2), block_rot))]);
 							}
 						}
 					}

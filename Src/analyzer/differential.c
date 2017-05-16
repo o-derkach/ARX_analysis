@@ -283,27 +283,32 @@ void arx_diff_search_two() {
 	uint32_t key_1, key_2;
 	uint32_t out, out_diff;
 	uint32_t alpha;
-	uint32_t beta_arr[BLOCK_SPACE];
+	double beta_arr[BLOCK_SPACE];
 	uint32_t i;
 	uint32_t a1, a2, g1, g2;
 
 	double sum = 0;
-	uint32_t sq = 0;
+	double sq = 0;
 
-	uint32_t alpha_sum[BLOCK_SPACE];
-	uint32_t min_alpha_sum = 0;
-	uint32_t max_alpha_sum = 0;
+	double alpha_sum[BLOCK_SPACE];
 
 	uint32_t theor_pract = 0;
 	uint32_t pract_bigger = 0;
 
-	memset(alpha_sum, 0, BLOCK_SPACE * sizeof(uint32_t));
+	char f_name[FILE_PATH_LEN + 20];
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp_2r_", BLOCK_BIT_LEN, ".txt");
+	INFO("File name =");
+	DEBUG(f_name);
+	FILE *f = fopen(f_name, "w");
 
-	FILE *f = fopen("/media/sf_Alexander/xdp_total_4.txt", "w");
+	for (i = 0; i < BLOCK_SPACE; ++i)
+		alpha_sum[i] = 0;
 
+	INFO("Start counting diff 2r...");
 	for (alpha = 0; alpha < BLOCK_SPACE; ++alpha) {
 		fprintf(f, "ALPHA = 0x%02X \n", alpha);
-		memset(beta_arr, 0, BLOCK_SPACE * sizeof(uint32_t));
+		for (i = 0; i < BLOCK_SPACE; ++i)
+			beta_arr[i] = 0;
 
 		for (block = 0; block < BLOCK_SPACE; ++block) {
 			for (key_1 = 0; key_1 < KEY_SPACE; ++key_1) {
@@ -315,7 +320,7 @@ void arx_diff_search_two() {
 					out_diff = ARX_GOST((block ^ alpha), key_1, BLOCK_ROT);
 					out_diff = ARX_GOST(out_diff, key_2, BLOCK_ROT);
 
-					++beta_arr[out ^ out_diff];
+					++beta_arr[(out ^ out_diff)];
 				}
 			}
 		}
@@ -326,7 +331,8 @@ void arx_diff_search_two() {
 			g1 = i >> PART_BIT_LEN;
 			g2 = i & PART_BIT_MASK;
 
-			sq = XDP_8[a2][(ROT_LO((a1 ^ g1), BLOCK_ROT))] * XDP_8[g1][(ROT_LO((a2 ^ g2), BLOCK_ROT))];
+			sq = ((double) XDP[a2][(ROT_LO((a1 ^ g1), BLOCK_ROT))])
+			   * ((double) XDP[g1][(ROT_LO((a2 ^ g2), BLOCK_ROT))]);
 
 			if (sq < beta_arr[i]) {
 				++pract_bigger;
@@ -340,39 +346,22 @@ void arx_diff_search_two() {
 			sum += sq;
 			if (sq != 0) {
 				++theor_pract;
-				fprintf(f, "\t0x%02X, %d, %d\n", i, sq, beta_arr[i]);
+				fprintf(f, "\t0x%02X, %.0f, %.0f\n", i, sq, beta_arr[i]);
 			} else if (beta_arr[i] != 0) {
-				fprintf(f, "\t == 0x%02X, %d, %d\n", i, sq, beta_arr[i]);
+				fprintf(f, "\t == 0x%02X, %.0f, %.0f\n", i, sq, beta_arr[i]);
 			}
 		}
 		fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
 	}
 
-	min_alpha_sum = alpha_sum[1];
-	max_alpha_sum = alpha_sum[0];
-	for (i = 0; i < BLOCK_SPACE; ++i) {
-		if ((i != 0) && ((i & 0xF) == 0)) {
-			fprintf(f, "\n");
-		}
-		fprintf(f, "%d ", alpha_sum[i]);
-
-		if (min_alpha_sum > alpha_sum[i])
-			min_alpha_sum = alpha_sum[i];
-
-		if (max_alpha_sum < alpha_sum[i])
-			max_alpha_sum = alpha_sum[i];
-
-	}
 	fprintf(f, "\n");
-	fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
 	fprintf(f, "sum = %.0f\n", sum);
-	fprintf(f, "sum = %.0f\n", sum / BLOCK_SPACE);
-	fprintf(f, "min = %d\n", min_alpha_sum);
-	fprintf(f, "max = %d\n", max_alpha_sum);
+	fprintf(f, "sum = %.0f\n", sum / (double)BLOCK_SPACE);
 	fprintf(f, "theory <> practice = %d from 65536 (%.2f %%)\n", theor_pract, 100 * ((double)theor_pract / 65536.0));
 	fprintf(f, "practice > teory   = %d from 65536 (%.2f %%)\n", pract_bigger, 100 * ((double)pract_bigger /  65536.0));
 
 	fclose(f);
+	INFO("End");
 }
 
 void arx_diff_search_three() {
@@ -380,7 +369,7 @@ void arx_diff_search_three() {
 	uint32_t key_1, key_2, key_3;
 	uint32_t out, out_diff;
 	uint32_t alpha;
-	uint32_t beta_arr[BLOCK_SPACE];
+	double beta_arr[BLOCK_SPACE];
 	uint32_t i, j;
 	uint32_t a1, a2, g1, g2;
 
@@ -388,8 +377,6 @@ void arx_diff_search_three() {
 	double sq = 0;
 
 	double alpha_sum[BLOCK_SPACE];
-	double min_alpha_sum = 0;
-	double max_alpha_sum = 0;
 
 	uint32_t theor_pract = 0;
 	uint32_t pract_bigger = 0;
@@ -397,11 +384,17 @@ void arx_diff_search_three() {
 	for (i = 0; i < BLOCK_SPACE; ++i)
 		alpha_sum[i] = 0;
 
-	FILE *f = fopen("/media/sf_Alexander/xdp_total_8(3 rounds)_3rot.txt", "w");
+	char f_name[FILE_PATH_LEN + 20];
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp_3r_", BLOCK_BIT_LEN, ".txt");
+	INFO("File name =");
+	DEBUG(f_name);
+	FILE *f = fopen(f_name, "w");
 
+	INFO("Start counting diff 3r...");
 	for (alpha = 0; alpha < BLOCK_SPACE; ++alpha) {
 		fprintf(f, "ALPHA = 0x%02X \n", alpha);
-		memset(beta_arr, 0, BLOCK_SPACE * sizeof(uint32_t));
+		for (i = 0; i < BLOCK_SPACE; ++i)
+			beta_arr[i] = 0;
 
 		for (block = 0; block < BLOCK_SPACE; ++block) {
 			for (key_1 = 0; key_1 < KEY_SPACE; ++key_1) {
@@ -416,7 +409,7 @@ void arx_diff_search_three() {
 						out_diff = ARX_GOST(out_diff, key_2, BLOCK_ROT);
 						out_diff = ARX_GOST(out_diff, key_3, BLOCK_ROT);
 
-						++beta_arr[out ^ out_diff];
+						++beta_arr[(out ^ out_diff)];
 					}
 				}
 			}
@@ -430,18 +423,18 @@ void arx_diff_search_three() {
 
 			sq = 0;
 			for (j = 0; j < KEY_SPACE; ++j) {
-				sq += (XDP_8[a2][(ROT_LO((a1 ^ j), BLOCK_ROT))]
-				    * XDP_8[j][(ROT_LO((a2 ^ g1), BLOCK_ROT))]
-				    * XDP_8[g1][(ROT_LO((j ^ g2), BLOCK_ROT))]);
+				sq += (((double) XDP[a2][(ROT_LO((a1 ^ j), BLOCK_ROT))])
+				    * ((double) XDP[j][(ROT_LO((a2 ^ g1), BLOCK_ROT))])
+				    * ((double) XDP[g1][(ROT_LO((j ^ g2), BLOCK_ROT))]));
 			}
 
 			/* third round norm */
-			beta_arr[i] *= 16;
+			beta_arr[i] *= (double)KEY_SPACE;
 			if (sq < beta_arr[i]) {
 				++pract_bigger;
-				sq = (double) beta_arr[i] - sq;
+				sq = beta_arr[i] - sq;
 			} else {
-				sq -= (double) beta_arr[i];
+				sq -= beta_arr[i];
 			}
 
 			sq *= sq;
@@ -449,39 +442,22 @@ void arx_diff_search_three() {
 			sum += sq;
 			if (sq != 0) {
 				++theor_pract;
-				fprintf(f, "\t0x%02X, %.0f, %d\n", i, sq, beta_arr[i]);
+				fprintf(f, "\t0x%02X, %.0f, %.0f\n", i, sq, beta_arr[i]);
 			} else if (beta_arr[i] != 0) {
-				fprintf(f, "\t == 0x%02X, %.0f, %d\n", i, sq, beta_arr[i]);
+				fprintf(f, "\t == 0x%02X, %.0f, %.0f\n", i, sq, beta_arr[i]);
 			}
 		}
 		fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
 	}
 
-	min_alpha_sum = alpha_sum[1];
-	max_alpha_sum = alpha_sum[0];
-	for (i = 0; i < BLOCK_SPACE; ++i) {
-		if ((i != 0) && ((i & 0xF) == 0)) {
-			fprintf(f, "\n");
-		}
-		fprintf(f, "%.0f ", alpha_sum[i]);
-
-		if (min_alpha_sum > alpha_sum[i])
-			min_alpha_sum = alpha_sum[i];
-
-		if (max_alpha_sum < alpha_sum[i])
-			max_alpha_sum = alpha_sum[i];
-
-	}
 	fprintf(f, "\n");
-	fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
 	fprintf(f, "sum = %.0f\n", sum);
-	fprintf(f, "sum = %.0f\n", sum / BLOCK_SPACE);
-	fprintf(f, "min = %.0f\n", min_alpha_sum);
-	fprintf(f, "max = %.0f\n", max_alpha_sum);
+	fprintf(f, "sum = %.0f\n", sum / (double)BLOCK_SPACE);
 	fprintf(f, "theory <> practice = %d from 65536 (%.2f %%)\n", theor_pract, 100 * ((double)theor_pract / 65536.0));
 	fprintf(f, "practice > teory   = %d from 65536 (%.2f %%)\n", pract_bigger, 100 * ((double)pract_bigger /  65536.0));
 
 	fclose(f);
+	INFO("End");
 }
 
 void arx_diff_search_four() {
@@ -497,8 +473,6 @@ void arx_diff_search_four() {
 	double sq = 0;
 
 	double alpha_sum[BLOCK_SPACE];
-	double min_alpha_sum = 0;
-	double max_alpha_sum = 0;
 
 	uint32_t theor_pract = 0;
 	uint32_t pract_bigger = 0;
@@ -506,11 +480,17 @@ void arx_diff_search_four() {
 	for (i = 0; i < BLOCK_SPACE; ++i)
 		alpha_sum[i] = 0;
 
-	FILE *f = fopen("/media/sf_Alexander/xdp_total_8(4 rounds)_rot2.txt", "w");
+	char f_name[FILE_PATH_LEN + 20];
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp_4r_", BLOCK_BIT_LEN, ".txt");
+	INFO("File name =");
+	DEBUG(f_name);
+	FILE *f = fopen(f_name, "w");
 
+	INFO("Start counting diff 4r...");
 	for (alpha = 0; alpha < BLOCK_SPACE; ++alpha) {
 		fprintf(f, "ALPHA = 0x%02X \n", alpha);
-		memset(beta_arr, 0, BLOCK_SPACE * sizeof(double));
+		for (i = 0; i < BLOCK_SPACE; ++i)
+			beta_arr[i] = 0;
 
 		for (block = 0; block < BLOCK_SPACE; ++block) {
 			for (key_1 = 0; key_1 < KEY_SPACE; ++key_1) {
@@ -528,7 +508,7 @@ void arx_diff_search_four() {
 							out_diff = ARX_GOST(out_diff, key_3, BLOCK_ROT);
 							out_diff = ARX_GOST(out_diff, key_4, BLOCK_ROT);
 
-							++beta_arr[out ^ out_diff];
+							++beta_arr[(out ^ out_diff)];
 						}
 					}
 				}
@@ -544,20 +524,20 @@ void arx_diff_search_four() {
 			sq = 0;
 			for (j = 0; j < KEY_SPACE; ++j) {
 				for (l = 0; l < KEY_SPACE; ++l) {
-					sq += ((double)XDP_8[a2][(ROT_LO((a1 ^ j), BLOCK_ROT))]
-						* (double)XDP_8[j][(ROT_LO((a2 ^ l), BLOCK_ROT))]
-						* (double)XDP_8[l][(ROT_LO((j ^ g1), BLOCK_ROT))]
-						* (double)XDP_8[g1][(ROT_LO((l ^ g2), BLOCK_ROT))]);
+					sq += ((double)XDP[a2][(ROT_LO((a1 ^ j), BLOCK_ROT))]
+						* (double)XDP[j][(ROT_LO((a2 ^ l), BLOCK_ROT))]
+						* (double)XDP[l][(ROT_LO((j ^ g1), BLOCK_ROT))]
+						* (double)XDP[g1][(ROT_LO((l ^ g2), BLOCK_ROT))]);
 				}
 			}
 
 			/* forth round norm */
-			beta_arr[i] *= 256;
+			beta_arr[i] *= BLOCK_SPACE;
 			if (sq < beta_arr[i]) {
 				++pract_bigger;
-				sq = (double) beta_arr[i] - sq;
+				sq = beta_arr[i] - sq;
 			} else {
-				sq -= (double) beta_arr[i];
+				sq -= beta_arr[i];
 			}
 
 			sq *= sq;
@@ -573,27 +553,118 @@ void arx_diff_search_four() {
 		fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
 	}
 
-	min_alpha_sum = alpha_sum[1];
-	max_alpha_sum = alpha_sum[0];
-	for (i = 0; i < BLOCK_SPACE; ++i) {
-		if ((i != 0) && ((i & 0xF) == 0)) {
-			fprintf(f, "\n");
-		}
-		fprintf(f, "%.0f ", alpha_sum[i]);
-
-		if (min_alpha_sum > alpha_sum[i])
-			min_alpha_sum = alpha_sum[i];
-
-		if (max_alpha_sum < alpha_sum[i])
-			max_alpha_sum = alpha_sum[i];
-
-	}
 	fprintf(f, "\n");
-	fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
 	fprintf(f, "sum = %.0f\n", sum);
-	fprintf(f, "sum = %.0f\n", sum / BLOCK_SPACE);
-	fprintf(f, "min = %.0f\n", min_alpha_sum);
-	fprintf(f, "max = %.0f\n", max_alpha_sum);
+	fprintf(f, "sum = %.0f\n", sum / (double)BLOCK_SPACE);
+	fprintf(f, "theory <> practice = %d from 65536 (%.2f %%)\n", theor_pract, 100 * ((double)theor_pract / 65536.0));
+	fprintf(f, "practice > teory   = %d from 65536 (%.2f %%)\n", pract_bigger, 100 * ((double)pract_bigger /  65536.0));
+
+	fclose(f);
+}
+
+void arx_diff_search_five() {
+	uint32_t block;
+	uint32_t key_1, key_2, key_3, key_4, key_5;
+	uint32_t out, out_diff;
+	uint32_t alpha;
+	double beta_arr[BLOCK_SPACE];
+	uint32_t i, j, l, h;
+	uint32_t a1, a2, g1, g2;
+
+	double sum = 0;
+	double sq = 0;
+
+	double alpha_sum[BLOCK_SPACE];
+
+	uint32_t theor_pract = 0;
+	uint32_t pract_bigger = 0;
+
+	for (i = 0; i < BLOCK_SPACE; ++i)
+		alpha_sum[i] = 0;
+
+	char f_name[FILE_PATH_LEN + 20];
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp_5r_", BLOCK_BIT_LEN, ".txt");
+	INFO("File name =");
+	DEBUG(f_name);
+	FILE *f = fopen(f_name, "w");
+
+	INFO("Start counting diff 5r...");
+	for (alpha = 0; alpha < BLOCK_SPACE; ++alpha) {
+		fprintf(f, "ALPHA = 0x%02X \n", alpha);
+		for (i = 0; i < BLOCK_SPACE; ++i)
+			beta_arr[i] = 0;
+
+		for (block = 0; block < BLOCK_SPACE; ++block) {
+			for (key_1 = 0; key_1 < KEY_SPACE; ++key_1) {
+				for (key_2 = 0; key_2 < KEY_SPACE; ++key_2) {
+					for (key_3 = 0; key_3 < KEY_SPACE; ++key_3) {
+						for (key_4 = 0; key_4 < KEY_SPACE; ++key_4) {
+						for (key_5 = 0; key_5 < KEY_SPACE; ++key_5) {
+
+							out = ARX_GOST(block, key_1, BLOCK_ROT);
+							out = ARX_GOST(out, key_2, BLOCK_ROT);
+							out = ARX_GOST(out, key_3, BLOCK_ROT);
+							out = ARX_GOST(out, key_4, BLOCK_ROT);
+							out = ARX_GOST(out, key_5, BLOCK_ROT);
+
+							out_diff = ARX_GOST((block ^ alpha), key_1, BLOCK_ROT);
+							out_diff = ARX_GOST(out_diff, key_2, BLOCK_ROT);
+							out_diff = ARX_GOST(out_diff, key_3, BLOCK_ROT);
+							out_diff = ARX_GOST(out_diff, key_4, BLOCK_ROT);
+							out_diff = ARX_GOST(out_diff, key_5, BLOCK_ROT);
+
+							++beta_arr[(out ^ out_diff)];
+						}
+						}
+					}
+				}
+			}
+		}
+
+		a1 = alpha >> PART_BIT_LEN;
+		a2 = alpha & PART_BIT_MASK;
+		for (i = 0; i < BLOCK_SPACE; ++i) {
+			g1 = i >> PART_BIT_LEN;
+			g2 = i & PART_BIT_MASK;
+
+			sq = 0;
+			for (j = 0; j < KEY_SPACE; ++j) {
+				for (l = 0; l < KEY_SPACE; ++l) {
+				for (h = 0; h < KEY_SPACE; ++h) {
+					sq += (((double) XDP[a2][(ROT_LO((a1 ^ j), BLOCK_ROT))])
+						*  ((double) XDP[j][(ROT_LO((a2 ^ l), BLOCK_ROT))])
+						*  ((double) XDP[l][(ROT_LO((j ^ h), BLOCK_ROT))])
+						*  ((double) XDP[h][(ROT_LO((l ^ g1), BLOCK_ROT))])
+						*  ((double) XDP[g1][(ROT_LO((h ^ g2), BLOCK_ROT))]));
+				}
+				}
+			}
+
+			/* forth round norm */
+			beta_arr[i] *= (double)BLOCK_SPACE * (double)KEY_SPACE;
+			if (sq < beta_arr[i]) {
+				++pract_bigger;
+				sq = beta_arr[i] - sq;
+			} else {
+				sq -= beta_arr[i];
+			}
+
+			sq *= sq;
+			alpha_sum[i] += sq;
+			sum += sq;
+			if (sq != 0) {
+				++theor_pract;
+				fprintf(f, "\t0x%02X, %.0f, %.0f\n", i, sq, beta_arr[i]);
+			} else if (beta_arr[i] != 0) {
+				fprintf(f, "\t == 0x%02X, %.0f, %.0f\n", i, sq, beta_arr[i]);
+			}
+		}
+		fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
+	}
+
+	fprintf(f, "\n");
+	fprintf(f, "sum = %.0f\n", sum);
+	fprintf(f, "sum = %.0f\n", sum / (double)BLOCK_SPACE);
 	fprintf(f, "theory <> practice = %d from 65536 (%.2f %%)\n", theor_pract, 100 * ((double)theor_pract / 65536.0));
 	fprintf(f, "practice > teory   = %d from 65536 (%.2f %%)\n", pract_bigger, 100 * ((double)pract_bigger /  65536.0));
 
