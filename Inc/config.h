@@ -18,6 +18,14 @@
 #define SBLOCK_SPACE (1 << SBLOCK_BIT_LEN)
 #define SBLOCK_BIT_MASK (SBLOCK_SPACE - 1)
 
+/* for LAX analysis */
+#define LAX_BIT_LEN 16
+#define LAX_PART_BIT_LEN (LAX_BIT_LEN / 2)
+#define LAX_SPACE (1 << LAX_BIT_LEN)
+#define LAX_PART_SPACE (1 << LAX_PART_BIT_LEN)
+#define LAX_BIT_MASK (LAX_SPACE - 1)
+#define LAX_PART_BIT_MASK (LAX_PART_SPACE - 1)
+
 #define PART_BIT_MASK ((1 << PART_BIT_LEN) - 1)
 #define BLOCK_BIT_MASK ((1 << BLOCK_BIT_LEN) - 1)
 
