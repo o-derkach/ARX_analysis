@@ -86,17 +86,18 @@ void lipmaa_moriai_3() {
 	for (alpha = 0; alpha < LAX_PART_SPACE; ++alpha) {
 		for (betta = 0; betta < LAX_PART_SPACE; ++betta) {
 			for (gamma = 0; gamma < LAX_PART_SPACE; ++gamma) {
-				eq = (LAX_PART_BIT_MASK ^ (alpha << 1))
-				   & (LAX_PART_BIT_MASK ^ (betta << 1))
-				   & (LAX_PART_BIT_MASK ^ (gamma << 1))
+				eq = ((~(alpha << 1)) ^ (betta << 1))
+				   & ((~(alpha << 1)) ^ (gamma << 1))
 				   & LAX_PART_BIT_MASK;
 				if ((eq & (alpha ^ betta ^ gamma ^ (gamma << 1)) & LAX_PART_BIT_MASK) == 0) {
 					k = 1 << byteWeight[(~eq) & LAX_PART_BIT_MASK];
 					fprintf(f, "%1.4f, ", 1.0 / (double)k);
-					XDP_TOTAL[LAX_PART_SPACE * alpha + LAX_PART_SPACE * betta + gamma] = 1.0 / (double)k;
+					XDP_TOTAL[LAX_PART_SPACE * LAX_PART_SPACE * alpha
+					          + LAX_PART_SPACE * betta + gamma] = 1.0 / (double)k;
 				} else {
 					fprintf(f, "     0, ");
-					XDP_TOTAL[LAX_PART_SPACE * alpha + LAX_PART_SPACE * betta + gamma] = 0;
+					XDP_TOTAL[LAX_PART_SPACE * LAX_PART_SPACE * alpha
+					          + LAX_PART_SPACE * betta + gamma] = 0;
 				}
 			}
 			fprintf(f, "\n");
@@ -159,9 +160,9 @@ void lipmaa_moriai_check_3(const double *xdp, const uint32_t space) {
 
 			for (i = 0; i < space; ++i) {
 				gamma_arr[i] /= (space * space);
-				if (gamma_arr[i] != xdp[space * alpha + space * beta + i]) {
+				if (gamma_arr[i] != xdp[space * space * alpha + space * beta + i]) {
 					ERROR("MISMATCH Lipmaa Moriai!!!\n");
-					printf("xdp = %1.4f, xdp_counted = %1.4f\n", xdp[space * alpha + space * beta + i], gamma_arr[i]);
+					printf("xdp = %1.4f, xdp_counted = %1.4f\n", xdp[space * space * alpha + space * beta + i], gamma_arr[i]);
 					printf("alpha = %d, betta = %d, gamma = %d\n", alpha, beta, i);
 					getchar();
 					getchar();
