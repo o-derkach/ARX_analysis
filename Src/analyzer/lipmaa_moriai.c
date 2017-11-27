@@ -64,25 +64,25 @@ void lipmaa_moriai_3() {
 	uint32_t eq;
 	uint32_t k;
 
-	char f_name[FILE_PATH_LEN + 15];
+//	char f_name[FILE_PATH_LEN + 15];
+//
+//	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp3_", LAX_PART_BIT_LEN, ".txt");
+//
+//	FILE *f = fopen(f_name, "w");
 
-	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "xdp3_", LAX_PART_BIT_LEN, ".txt");
-
-	FILE *f = fopen(f_name, "w");
-
-	switch (LAX_PART_BIT_LEN) {
-		case 8:
-			fprintf(f, "static const uint32_t XDP_8[256 * 256 * 256] = {\n");
-			break;
-		case 16:
-			fprintf(f, "static const double XDP_16[256 * 256 * 256] = {\n");
-			break;
-
-		default:
-			fclose(f);
-			return;
-	}
-
+//	switch (LAX_PART_BIT_LEN) {
+//		case 8:
+//			fprintf(f, "static const uint32_t XDP_8[256 * 256 * 256] = {\n");
+//			break;
+//		case 16:
+//			fprintf(f, "static const double XDP_16[256 * 256 * 256] = {\n");
+//			break;
+//
+//		default:
+//			fclose(f);
+//			return;
+//	}
+//
 	for (alpha = 0; alpha < LAX_PART_SPACE; ++alpha) {
 		for (betta = 0; betta < LAX_PART_SPACE; ++betta) {
 			for (gamma = 0; gamma < LAX_PART_SPACE; ++gamma) {
@@ -91,21 +91,21 @@ void lipmaa_moriai_3() {
 				   & LAX_PART_BIT_MASK;
 				if ((eq & (alpha ^ betta ^ gamma ^ (gamma << 1)) & LAX_PART_BIT_MASK) == 0) {
 					k = 1 << byteWeight[(~eq) & LAX_PART_BIT_MASK];
-					fprintf(f, "%1.4f, ", 1.0 / (double)k);
+//					fprintf(f, "%1.4f, ", 1.0 / (double)k);
 					XDP_TOTAL[LAX_PART_SPACE * LAX_PART_SPACE * alpha
 					          + LAX_PART_SPACE * betta + gamma] = 1.0 / (double)k;
 				} else {
-					fprintf(f, "     0, ");
+//					fprintf(f, "     0, ");
 					XDP_TOTAL[LAX_PART_SPACE * LAX_PART_SPACE * alpha
 					          + LAX_PART_SPACE * betta + gamma] = 0;
 				}
 			}
-			fprintf(f, "\n");
+//			fprintf(f, "\n");
 		}
 	}
-	fprintf(f, "};\n");
-
-	fclose(f);
+//	fprintf(f, "};\n");
+//
+//	fclose(f);
 }
 
 void lipmaa_moriai_check(const uint32_t xdp[256][256], const uint32_t space) {

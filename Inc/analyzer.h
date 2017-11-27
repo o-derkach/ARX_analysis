@@ -36,4 +36,35 @@ void arx_best_rot_six();
 #define XDP XDP_16
 #endif
 
+/* LAX analysis */
+
+typedef struct {
+	uint32_t *arr;
+	uint32_t size;
+} TrailAll;
+
+void arx_lax_check();
+void lax_matrix_inv();
+void trail_search_lax(uint32_t rounds);
+void trail_search_lax_3();
+void trail_search_lax_6();
+void trail_search_lax_9();
+void trail_search_lax_12();
+
+void arx_lax_check_4();
+void lax_matrix_inv_4();
+void trail_search_lax4(uint32_t rounds);
+void trail_search_lax4_3();
+void trail_search_lax4_6();
+void trail_search_lax4_9();
+void trail_search_lax4_12();
+
+void arx_lax_check_3();
+void lax_matrix_inv_3();
+void trail_search_lax3(uint32_t rounds);
+void trail_search_lax3_3();
+void trail_search_lax3_6();
+void trail_search_lax3_9();
+void trail_search_lax3_12();
+
 #endif /* ANALYZER_H_ */

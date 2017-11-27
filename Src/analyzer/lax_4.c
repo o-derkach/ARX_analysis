@@ -4100,7 +4100,7 @@ static const uint32_t LAX_ARR[65536] = {
 	0xFF1E, 0x68FF, 0xC168, 0x56C1, 0x9256, 0x0592, 0xAC05, 0x3BAC, 0x343B, 0xA334, 0x0AA3, 0x9D0A, 0x599D, 0xCE59, 0x67CE, 0xF067
 };
 
-static const uint32_t L_box_5[LAX_PART_SPACE] = {
+static const uint32_t L_box_4[LAX_PART_SPACE] = {
 	0x00, 0x97, 0x3e, 0xa9, 0x6d, 0xfa, 0x53, 0xc4, 0xcb, 0x5c, 0xf5, 0x62, 0xa6, 0x31, 0x98, 0x0f,
 	0xee, 0x79, 0xd0, 0x47, 0x83, 0x14, 0xbd, 0x2a, 0x25, 0xb2, 0x1b, 0x8c, 0x48, 0xdf, 0x76, 0xe1,
 	0xdd, 0x4a, 0xe3, 0x74, 0xb0, 0x27, 0x8e, 0x19, 0x16, 0x81, 0x28, 0xbf, 0x7b, 0xec, 0x45, 0xd2,
@@ -4119,7 +4119,7 @@ static const uint32_t L_box_5[LAX_PART_SPACE] = {
 	0xff, 0x68, 0xc1, 0x56, 0x92, 0x05, 0xac, 0x3b, 0x34, 0xa3, 0x0a, 0x9d, 0x59, 0xce, 0x67, 0xf0
 };
 
-static const uint32_t L_inv_5[LAX_PART_SPACE] = {
+static const uint32_t L_inv_4[LAX_PART_SPACE] = {
         0x00, 0x9e, 0x3d, 0xa3, 0x6b, 0xf5, 0x56, 0xc8, 0xc7, 0x59, 0xfa, 0x64, 0xac, 0x32, 0x91, 0x0f,
         0x7e, 0xe0, 0x43, 0xdd, 0x15, 0x8b, 0x28, 0xb6, 0xb9, 0x27, 0x84, 0x1a, 0xd2, 0x4c, 0xef, 0x71,
         0xed, 0x73, 0xd0, 0x4e, 0x86, 0x18, 0xbb, 0x25, 0x2a, 0xb4, 0x17, 0x89, 0x41, 0xdf, 0x7c, 0xe2,
@@ -4138,17 +4138,6 @@ static const uint32_t L_inv_5[LAX_PART_SPACE] = {
         0xff, 0x61, 0xc2, 0x5c, 0x94, 0x0a, 0xa9, 0x37, 0x38, 0xa6, 0x05, 0x9b, 0x53, 0xcd, 0x6e, 0xf0
 };
 
-//static void add_trail(TrailAll *trails, uint32_t *t, uint32_t r)
-//{
-//	uint32_t i;
-//
-//	for (i = 0; i < r; ++i) {
-//		trails->arr[LAX_SPACE * trails->size + i] = t[i];
-//	}
-//
-//	trails->size++;
-//}
-
 static double theor_prob(uint32_t *t, uint32_t rounds)
 {
 	double prob = 1;
@@ -4158,7 +4147,7 @@ static double theor_prob(uint32_t *t, uint32_t rounds)
 	for (i = 1; i < rounds; ++i) {
 		index = LAX_PART_SPACE * LAX_PART_SPACE * (t[i - 1] >> LAX_PART_BIT_LEN)
 			  + LAX_PART_SPACE * (t[i - 1] & LAX_PART_BIT_MASK)
-			  + L_inv_5[ t[i] & LAX_PART_BIT_MASK ];
+			  + L_inv_4[ t[i] & LAX_PART_BIT_MASK ];
 
 		prob *= XDP_TOTAL[index];
 	}
@@ -4182,27 +4171,27 @@ static int check_trail(TrailAll *trails, uint32_t *t, uint32_t r)
 	return LAX_SPACE;
 }
 
-void trail_search_lax(uint32_t rounds)
+void trail_search_lax4(uint32_t rounds)
 {
 	switch (rounds) {
 	case 3:
-		trail_search_lax_3();
+		trail_search_lax4_3();
 		break;
 	case 6:
-		trail_search_lax_6();
+		trail_search_lax4_6();
 		break;
 	case 9:
-		trail_search_lax_9();
+		trail_search_lax4_9();
 		break;
 	case 12:
-		trail_search_lax_12();
+		trail_search_lax4_12();
 		break;
 	default:
 		ERROR("Incorect rounds!");
 	}
 }
 
-void trail_search_lax_3()
+void trail_search_lax4_3()
 {
 	uint32_t block;
 	uint32_t out, out_diff;
@@ -4228,7 +4217,7 @@ void trail_search_lax_3()
 
 	double max_pract_prob = 0;
 
-	bound = 1.0 / 8;
+	bound = 1.0 / 4;
 
 	trail_arr = malloc(sizeof(uint32_t) * LAX_SPACE * (rounds + 1));
 
@@ -4237,7 +4226,7 @@ void trail_search_lax_3()
 
 	char f_name[FILE_PATH_LEN + 20];
 
-	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "lax_rc_", rounds, ".txt");
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "lax_r4_", rounds, ".txt");
 
 	INFO("File name =");
 	DEBUG(f_name);
@@ -4248,6 +4237,7 @@ void trail_search_lax_3()
 	bound_bigger = 0;
 
 	INFO("Counting probabilities...");
+
 	for (alpha = 0; alpha < LAX_SPACE; ++alpha) {
 		/* set zeros */
 		for (index = 0; index < LAX_SPACE; ++index) {
@@ -4261,16 +4251,16 @@ void trail_search_lax_3()
 		out = 0;
 		out_diff = alpha;
 		// 1
-		out = LAX_PRIM(out, L_box_5);
-		out_diff = LAX_PRIM(out_diff, L_box_5);
+		out = LAX_PRIM(out, L_box_4);
+		out_diff = LAX_PRIM(out_diff, L_box_4);
 		trails.arr[1] = out_diff ^ out;
 		// 2
-		out = LAX_PRIM(out, L_box_5);
-		out_diff = LAX_PRIM(out_diff, L_box_5);
+		out = LAX_PRIM(out, L_box_4);
+		out_diff = LAX_PRIM(out_diff, L_box_4);
 		trails.arr[2] = out_diff ^ out;
 		// 3
-		out = LAX_PRIM(out, L_box_5);
-		out_diff = LAX_PRIM(out_diff, L_box_5);
+		out = LAX_PRIM(out, L_box_4);
+		out_diff = LAX_PRIM(out_diff, L_box_4);
 		trails.arr[3] = out_diff ^ out;
 
 		prob_pract[trails.size]++;
@@ -4286,16 +4276,16 @@ void trail_search_lax_3()
 
 			// cipher
 			// 1
-			out = LAX_PRIM(out, L_box_5);
-			out_diff = LAX_PRIM(out_diff, L_box_5);
+			out = LAX_PRIM(out, L_box_4);
+			out_diff = LAX_PRIM(out_diff, L_box_4);
 			*(curr_trail + 1) = out_diff ^ out;
 			// 2
-			out = LAX_PRIM(out, L_box_5);
-			out_diff = LAX_PRIM(out_diff, L_box_5);
+			out = LAX_PRIM(out, L_box_4);
+			out_diff = LAX_PRIM(out_diff, L_box_4);
 			*(curr_trail + 2) = out_diff ^ out;
 			// 3
-			out = LAX_PRIM(out, L_box_5);
-			out_diff = LAX_PRIM(out_diff, L_box_5);
+			out = LAX_PRIM(out, L_box_4);
+			out_diff = LAX_PRIM(out_diff, L_box_4);
 			*(curr_trail + 3) = out_diff ^ out;
 
 			trail_checked = check_trail(&trails, curr_trail, rounds);
@@ -4360,196 +4350,11 @@ void trail_search_lax_3()
 	INFO("End");
 }
 
-void trail_search_lax_6()
-{
-	uint32_t block;
-	uint32_t out, out_diff;
-	uint32_t alpha;
-	uint32_t index;
-	uint32_t *trail_arr;
-	uint32_t *curr_trail;
-	uint32_t trail_checked;
-	double prob_theor[LAX_SPACE];
-	double prob_pract[LAX_SPACE];
+void trail_search_lax4_6() {}
+void trail_search_lax4_9() {}
+void trail_search_lax4_12() {}
 
-	double bound;
-
-	const uint32_t rounds = 6;
-
-	TrailAll trails;
-
-	uint64_t theor_pract = 0;
-	uint64_t pract_bigger = 0;
-	uint64_t bound_bigger = 0;
-
-	uint64_t total_trails = 0;
-
-	double max_pract_prob = 0;
-
-	bound = 1.0 / 8;
-	bound *= bound;
-
-	trail_arr = malloc(sizeof(uint32_t) * LAX_SPACE * (rounds + 1));
-
-	trails.arr = trail_arr;
-	trails.size = 0;
-
-	char f_name[FILE_PATH_LEN + 20];
-
-	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "lax_r_", rounds, ".txt");
-
-	INFO("File name =");
-	DEBUG(f_name);
-	FILE *f = fopen(f_name, "w");
-
-	theor_pract = 0;
-	pract_bigger = 0;
-	bound_bigger = 0;
-
-	INFO("Counting probabilities...");
-	for (alpha = 0; alpha < 128; ++alpha) {
-		/* set zeros */
-		for (index = 0; index < LAX_SPACE; ++index) {
-			prob_theor[index] = 0;
-			prob_pract[index] = 0;
-			*(trails.arr + (rounds + 1) * index) = alpha;
-		}
-		trails.size = 0;
-
-		/* zero in */
-		out = 0;
-		out_diff = alpha;
-		// 1
-		out = LAX_ARR[out];
-		out_diff = LAX_ARR[out_diff];
-		trails.arr[1] = out_diff ^ out;
-		// 2
-		out = LAX_ARR[out];
-		out_diff = LAX_ARR[out_diff];
-		trails.arr[2] = out_diff ^ out;
-		// 3
-		out = LAX_ARR[out];
-		out_diff = LAX_ARR[out_diff];
-		trails.arr[3] = out_diff ^ out;
-		// 4
-		out = LAX_ARR[out];
-		out_diff = LAX_ARR[out_diff];
-		trails.arr[4] = out_diff ^ out;
-		// 5
-		out = LAX_ARR[out];
-		out_diff = LAX_ARR[out_diff];
-		trails.arr[5] = out_diff ^ out;
-		// 6
-		out = LAX_ARR[out];
-		out_diff = LAX_ARR[out_diff];
-		trails.arr[6] = out_diff ^ out;
-
-		prob_pract[trails.size]++;
-		prob_theor[trails.size] = theor_prob(&trails.arr[0], rounds);
-		++trails.size;
-
-		/* average by in */
-		for (block = 1; block < LAX_SPACE; ++block) {
-			curr_trail = &(trails.arr[(rounds + 1) * trails.size]);
-
-			out = block;
-			out_diff = block ^ alpha;
-
-			// cipher
-			// 1
-			out = LAX_ARR[out];
-			out_diff = LAX_ARR[out_diff];
-			*(curr_trail + 1) = out_diff ^ out;
-			// 2
-			out = LAX_ARR[out];
-			out_diff = LAX_ARR[out_diff];
-			*(curr_trail + 2) = out_diff ^ out;
-			// 3
-			out = LAX_ARR[out];
-			out_diff = LAX_ARR[out_diff];
-			*(curr_trail + 3) = out_diff ^ out;
-			// 4
-			out = LAX_ARR[out];
-			out_diff = LAX_ARR[out_diff];
-			*(curr_trail + 4) = out_diff ^ out;
-			// 5
-			out = LAX_ARR[out];
-			out_diff = LAX_ARR[out_diff];
-			*(curr_trail + 5) = out_diff ^ out;
-			// 6
-			out = LAX_ARR[out];
-			out_diff = LAX_ARR[out_diff];
-			*(curr_trail + 6) = out_diff ^ out;
-
-			trail_checked = check_trail(&trails, curr_trail, rounds);
-			if (trail_checked == LAX_SPACE) {
-				prob_pract[trails.size]++;
-				prob_theor[trails.size] = theor_prob(curr_trail, rounds);
-				++trails.size;
-			} else {
-				prob_pract[trail_checked]++;
-			}
-		}
-
-		for (block = 0; block < trails.size; ++block) {
-			prob_pract[block] /= LAX_SPACE;
-
-			if ((prob_pract[block] > max_pract_prob)
-			 && (prob_pract[block] != 1)) {
-				max_pract_prob = prob_pract[block];
-			}
-
-			if (prob_pract[block] != prob_theor[block]) {
-				++theor_pract;
-				if (prob_pract[block] > prob_theor[block]) {
-//					fprintf(f, "\t pract|theor|bound = %.4f | %.4f | %.4f\n", prob_pract[block], prob_theor[block], bound[rounds / 3 - 1]);
-					++pract_bigger;
-				}
-			}
-
-			if ((prob_pract[block] > bound)
-			 && (prob_pract[block] != 1)) {
-				fprintf(f, "ALPHA = 0x%04X -> 0x%04X -> 0x%04X -> 0x%04X -> 0x%04X -> 0x%04X -> 0x%04X | prob = %.6f\n",
-						alpha,
-						trails.arr[(rounds + 1) * block + 1],
-						trails.arr[(rounds + 1) * block + 2],
-						trails.arr[(rounds + 1) * block + 3],
-						trails.arr[(rounds + 1) * block + 4],
-						trails.arr[(rounds + 1) * block + 5],
-						trails.arr[(rounds + 1) * block + 6],
-						prob_pract[block]);
-				++bound_bigger;
-			}
-		}
-		total_trails +=trails.size;
-	}
-
-	fprintf(f, "theory <> practice = %zu from %zu (%.6f %%)\n",
-			theor_pract,
-			total_trails,
-			100 * ((double)theor_pract / total_trails));
-	fprintf(f, "practice > teory   = %zu from %zu (%.6f %%)\n",
-			pract_bigger,
-			total_trails,
-			100 * ((double)pract_bigger / total_trails));
-	fprintf(f, "practice > bound   = %zu from %zu (%.6f %%)\n",
-			bound_bigger,
-			total_trails,
-			100 * ((double)bound_bigger / total_trails));
-	fprintf(f, "max_prctice_prob   = %.6f\n",
-			max_pract_prob);
-	fprintf(f, "* * * * *  * * * * *  * * * * *  * * * * *  * * * * * \n");
-
-
-	free(trail_arr);
-	fclose(f);
-	INFO("End");
-}
-
-void trail_search_lax_9() {}
-void trail_search_lax_12() {}
-
-void lax_matrix_inv()
+void lax_matrix_inv_4()
 {
 	uint32_t x;
 
@@ -4558,7 +4363,7 @@ void lax_matrix_inv()
 	printf("static const uint32_t L_inv_5[LAX_PART_SPACE] = {\n");
 
 	for (x = 0; x < LAX_PART_SPACE; ++x) {
-		inv[L_box_5[x]] = x;
+		inv[L_box_4[x]] = x;
 	}
 	for (x = 0; x < LAX_PART_SPACE; ++x) {
 		if (x % 16 == 0)
@@ -4573,26 +4378,26 @@ static void lax_array() {
 
 	char f_name[FILE_PATH_LEN + 15];
 
-	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "lax_", LAX_BIT_LEN, ".txt");
+	sprintf(f_name, "%s%s%02d%s", FILE_PATH, "lax4_", LAX_BIT_LEN, ".txt");
 
 	FILE *f = fopen(f_name, "w");
 
-	fprintf(f, "static const uint32_t LAX_ARR[65536] = {\n");
+	fprintf(f, "static const uint32_t LAX_ARR_4[65536] = {\n");
 
 	for (x = 0; x < LAX_SPACE; ++x) {
 		if (x % 16 == 0) {
 			fprintf(f, "\n\t");
 		}
-		fprintf(f, "0x%04X, ", LAX_PRIM(x, L_box_5));
+		fprintf(f, "0x%04X, ", LAX_PRIM(x, L_box_4));
 	}
 	fprintf(f, "};\n");
 
 	fclose(f);
 }
 
-void arx_lax_check()
+void arx_lax_check_4()
 {
-	lax_primitive_check(L_box_5);
+	lax_primitive_check(L_box_4);
 
 	lax_array();
 }

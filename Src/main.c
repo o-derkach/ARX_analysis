@@ -92,13 +92,39 @@ void best_rot_test()
 	arx_best_rot_six();
 }
 
-int main()
+void lax_analysis(uint32_t r)
 {
+	clock_t c1, c2;
+
+	arx_lax_check();
+	lipmaa_moriai_test_3();
+
+	c1 = clock();
+	trail_search_lax(r);
+	c2 = clock();
+	printf("Calculation done in %0.1f seconds...\n", (double)(c2 - c1) / CLOCKS_PER_SEC);
+	c1 = c2;
+
+}
+
+int main(int argc, char *argv[])
+{
+	int rounds;
 	srand(time(NULL));
 
 	/* ARX-GOST checks */
 //	arx_gost_check();
 
-	lipmaa_moriai_test_3();
+	/* LAX checks */
+//	arx_lax_check();
+	if (argc == 2)
+		rounds = atoi(argv[1]);
+	else
+		rounds = 3;
+
+	printf("rounds = %d\n", (uint32_t)rounds);
+	lax_analysis((uint32_t)rounds);
+
+//	lipmaa_moriai_test_3();
 	return 0;
 }
